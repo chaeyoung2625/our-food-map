@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 뭐 먹지?</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#252522;--muted:#85857d;--line:#e9e7df;--accent:#62765b;--soft:#edf1e9;--rose:#f5e9e4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family: Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:auto;padding:28px 22px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{font-size:13px;letter-spacing:.16em;color:var(--accent);font-weight:800}.hero{padding:35px 0 25px;border-bottom:1px solid var(--line)}
+h1{font-size:clamp(32px,6vw,52px);letter-spacing:-.06em;margin:8px 0}.sub{color:var(--muted);font-size:14px;line-height:1.6}
+button,.btn{border:0;border-radius:12px;padding:12px 16px;background:var(--accent);color:white;font-weight:700;cursor:pointer;font-size:14px}
+button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}button.light{background:var(--soft);color:var(--accent)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:22px 0}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;font:inherit;color:var(--ink);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}.search{flex:1;min-width:190px}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 20px}.chip{padding:8px 13px;border-radius:99px;background:#fff;border:1px solid var(--line);color:#777;font-size:13px;cursor:pointer}.chip.active{background:var(--soft);border-color:#d9e2d3;color:var(--accent);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:15px}.card{background:var(--card);border:1px solid var(--line);border-radius:17px;overflow:hidden;display:flex;flex-direction:column;min-height:205px}
+.thumb{height:130px;background:linear-gradient(135deg,#e8e9df,#f1e8df);display:flex;align-items:center;justify-content:center;color:#9a9c8d;font-size:34px;overflow:hidden}.thumb img{width:100%;height:100%;object-fit:cover}
+.content{padding:15px;display:flex;flex-direction:column;flex:1}.meta{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px}.name{font-size:18px;font-weight:800;margin:8px 0 5px;letter-spacing:-.03em}.memo{font-size:13px;color:#777;line-height:1.5;white-space:pre-wrap;min-height:20px}.actions{display:flex;gap:7px;margin-top:14px}.actions button{padding:8px 10px;font-size:12px;border-radius:9px}.actions .open{flex:1}
+.badge{background:var(--soft);color:var(--accent);border-radius:99px;padding:5px 8px;font-size:11px;font-weight:700}.visited{background:var(--rose);color:#9b6657}
+.empty{grid-column:1/-1;text-align:center;padding:60px 15px;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:16px}
+.modal{display:none;position:fixed;inset:0;background:#0007;z-index:5;padding:18px;overflow:auto}.modal.show{display:flex;align-items:center;justify-content:center}.panel{width:min(520px,100%);background:#fff;border-radius:20px;padding:22px;max-height:95vh;overflow:auto}.panel h2{margin:0 0 18px}.field{margin:13px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.notice{margin-top:24px;padding:15px 17px;border-radius:14px;background:#f0eee7;color:#777;font-size:12px;line-height:1.65}.status{font-size:12px;color:var(--muted)}.status strong{color:var(--accent)}
+@media(max-width:560px){.wrap{padding:20px 15px 45px}.top{align-items:flex-start}.top button{padding:10px 12px}.hero{padding-top:28px}.row{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr;gap:10px}.thumb{height:100px}.content{padding:11px}.name{font-size:15px}.actions{flex-wrap:wrap}.actions button{padding:8px}.sub{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">OUR LITTLE FOOD MAP</div><button onclick="openSettings()" class="secondary">공유 설정</button></div>
+  <section class="hero">
+    <div class="sub">둘이서 하나씩 모아두는</div>
+    <h1>우리 뭐 먹지?</h1>
+    <div class="sub">먹고 싶은 곳을 저장하고, 하나씩 같이 가보자 🍽️</div>
+  </section>
+  <div class="toolbar">
+    <input id="search" class="search" placeholder="음식점 이름이나 메모 검색" oninput="render()">
+    <button class="secondary" onclick="exportExcel()">엑셀로 추출 ↓</button>
+    <button onclick="openForm()">＋ 장소 추가</button>
+  </div>
+  <div class="filters" id="filters"></div>
+  <div class="row" style="margin:-8px 0 18px"><div><select id="countryFilter" onchange="render()"><option value="전체">모든 나라</option></select></div><div><select id="regionFilter" onchange="render()"><option value="전체">모든 지역</option></select></div></div>
+  <div class="grid" id="cards"></div>
+  <div class="notice"><b>함께 쓰는 방법</b><br>공유 설정에서 데이터베이스를 연결하면, 같은 사이트 주소로 접속한 두 사람이 같은 목록을 함께 볼 수 있어요. 데이터베이스를 연결하지 않은 미리보기 상태에서는 이 기기에만 저장됩니다.</div>
+  <div class="status" id="status" style="margin-top:12px">저장 방식: <strong>이 기기에 저장</strong></div>
+</div>
+
+<div class="modal" id="formModal"><div class="panel">
+<h2 id="formTitle">장소 추가하기</h2>
+<form id="placeForm" onsubmit="savePlace(event)">
+<input type="hidden" id="editId">
+<div class="field"><label>음식점 이름 *</label><input id="name" required placeholder="예: 소문난 맛집"></div>
+<div class="row">
+<div class="field"><label>종류</label><select id="category"><option>한식</option><option>일식</option><option>중식</option><option>양식</option><option>분식</option><option>고기</option><option>카페·디저트</option><option>술집</option><option>기타</option></select></div>
+<div class="field"><label>상태</label><select id="visited"><option value="false">가고 싶은 곳</option><option value="true">다녀온 곳</option></select></div>
+</div>
+<div class="row">
+<div class="field"><label>나라</label><select id="country"><option value="대한민국">대한민국</option><option>일본</option><option>대만</option><option>중국</option><option>태국</option><option>베트남</option><option>싱가포르</option><option>미국</option><option>캐나다</option><option>영국</option><option>프랑스</option><option>이탈리아</option><option>스페인</option><option>호주</option><option value="기타">기타</option></select></div>
+<div class="field"><label>지역 / 도시</label><input id="region" placeholder="예: 부산 해운대구, 도쿄 신주쿠"></div>
+</div>
+<div class="field"><label>장소 링크</label><input id="url" type="url" placeholder="네이버 지도, 카카오맵, 인스타그램 링크"></div>
+<div class="field"><label>사진 첨부 (선택)</label><input id="photoFile" type="file" accept="image/*"><div class="sub" style="margin-top:6px">휴대폰이나 컴퓨터에 있는 사진을 직접 선택할 수 있어요.</div><div id="photoPreview" style="margin-top:9px"></div></div>
+<div class="field"><label>메모</label><textarea id="memo" rows="3" placeholder="먹고 싶은 메뉴, 추천 이유 등"></textarea></div>
+<div class="field"><label>레시피 (선택)</label><textarea id="recipe" rows="5" placeholder="재료와 조리 순서를 자유롭게 적어주세요.&#10;예) 재료: 계란 2개, 밥 1공기&#10;1. 팬에 기름을 두르고..."></textarea><div class="sub" style="margin-top:6px">레시피는 음식점 카드에서 버튼을 눌러야 볼 수 있어요.</div></div>
+<div class="modal-actions"><button type="button" class="secondary" onclick="closeForm()">취소</button><button type="submit">저장하기</button></div>
+</form></div></div>
+
+<div class="modal" id="recipeModal"><div class="panel"><h2 id="recipeTitle">레시피</h2><div id="recipeBody" style="white-space:pre-wrap;line-height:1.8;color:#555;font-size:14px;background:#f8f7f3;padding:16px;border-radius:12px"></div><div class="modal-actions"><button type="button" class="secondary" onclick="closeRecipe()">닫기</button></div></div></div>
+
+<div class="modal" id="settingsModal"><div class="panel">
+<h2>함께 쓰기 설정</h2>
+<p class="sub">두 사람이 같은 목록을 보려면 Supabase 데이터베이스 연결이 필요해요. 아래 정보를 한 번 입력하면 이 브라우저에 저장됩니다.</p>
+<div class="field"><label>Project URL</label><input id="sbUrl" placeholder="https://xxxx.supabase.co"></div>
+<div class="field"><label>Anon / Publishable key</label><input id="sbKey" placeholder="Supabase 공개 키"></div>
+<div class="notice"><b>처음 한 번만 필요한 설정</b><br>1. Supabase에서 새 프로젝트를 만들어요.<br>2. SQL Editor에 아래 SQL을 실행해요.<br>3. Project URL과 anon key를 위에 붙여넣고 연결해요.<br><br><code>create table public.food_places (id uuid primary key default gen_random_uuid(), name text not null, category text default '기타', country text default '대한민국', region text, url text, photo text, memo text, recipe text, visited boolean default false, created_at timestamptz default now());<br>alter table public.food_places add column if not exists country text default '대한민국';<br>alter table public.food_places add column if not exists region text;<br>alter table public.food_places add column if not exists recipe text;<br>alter table public.food_places enable row level security;<br>create policy "public read" on public.food_places for select to anon using (true);<br>create policy "public insert" on public.food_places for insert to anon with check (true);<br>create policy "public update" on public.food_places for update to anon using (true) with check (true);<br>create policy "public delete" on public.food_places for delete to anon using (true);</code><br><br>※ 이 설정은 링크를 아는 누구나 목록을 보고 수정·삭제할 수 있는 공개형 공유 방식이에요. 민감한 정보는 입력하지 마세요.</div>
+<div class="modal-actions"><button class="secondary" onclick="closeSettings()">닫기</button><button onclick="connectCloud()">연결하기</button></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+let items=[], filter='전체', client=null;
+const localKey='our-food-map-v1';
+const cats=['전체','한식','일식','중식','양식','분식','고기','카페·디저트','술집','기타'];
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function init(){const u=localStorage.getItem('food_sb_url'),k=localStorage.getItem('food_sb_key');if(u&&k){document.getElementById('sbUrl').value=u;document.getElementById('sbKey').value=k;try{client=window.supabase.createClient(u,k);loadCloud();return}catch(e){}}loadLocal();render();}
+function loadLocal(){items=JSON.parse(localStorage.getItem(localKey)||'[]');setStatus(false)}
+function setStatus(cloud){document.getElementById('status').innerHTML='저장 방식: <strong>'+(cloud?'공동 데이터베이스 연결됨':'이 기기에 저장')+'</strong>'}
+async function loadCloud(){try{let {data,error}=await client.from('food_places').select('*').order('created_at',{ascending:false});if(error)throw error;items=data||[];setStatus(true);render()}catch(e){alert('공동 목록을 불러오지 못했어요. 설정을 확인해 주세요.');loadLocal();render()}}
+function render(){const f=document.getElementById('filters');f.innerHTML=cats.map(c=>`<button class="chip ${filter===c?'active':''}" onclick="filter='${c}';render()">${c}</button>`).join('');
+const cf=document.getElementById('countryFilter'), rf=document.getElementById('regionFilter');
+const oldC=cf.value||'전체', oldR=rf.value||'전체';
+const countries=[...new Set(items.map(x=>x.country||'대한민국').filter(Boolean))].sort();
+cf.innerHTML='<option value="전체">모든 나라</option>'+countries.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');cf.value=countries.includes(oldC)?oldC:'전체';
+const regions=[...new Set(items.filter(x=>cf.value==='전체'||(x.country||'대한민국')===cf.value).map(x=>x.region||'').filter(Boolean))].sort();
+rf.innerHTML='<option value="전체">모든 지역</option>'+regions.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');rf.value=regions.includes(oldR)?oldR:'전체';
+let q=document.getElementById('search').value.toLowerCase();let list=items.filter(x=>(filter==='전체'||x.category===filter)&&(cf.value==='전체'||(x.country||'대한민국')===cf.value)&&(rf.value==='전체'||(x.region||'')===rf.value)&&(`${x.name} ${x.memo||''} ${x.country||''} ${x.region||''}`).toLowerCase().includes(q));
+document.getElementById('cards').innerHTML=list.length?list.map(x=>`<article class="card"><div class="thumb">${x.photo?`<img src="${esc(x.photo)}" onerror="this.parentElement.innerHTML='🍴'">`:'🍴'}</div><div class="content"><div class="meta"><span>${esc(x.category||'기타')} · ${esc(x.country||'대한민국')}${x.region?' / '+esc(x.region):''}</span><span class="badge ${x.visited?'visited':''}">${x.visited?'다녀왔어요':'가고 싶어요'}</span></div><div class="name">${esc(x.name)}</div><div class="memo">${esc(x.memo||'')}</div>${x.recipe?`<button type="button" class="light" style="margin-top:12px;width:100%" onclick="showRecipe('${x.id}')">레시피 보기 ⌄</button>`:''}<div class="actions">${x.url?`<a class="open" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:8px 10px;background:var(--accent);color:#fff;font-size:12px;font-weight:700">링크 바로가기 ↗</a>`:'<button class="open light" disabled>링크 없음</button>'}<button class="secondary" onclick="editPlace('${x.id}')">수정</button><button class="secondary" onclick="removePlace('${x.id}')">삭제</button></div></div></article>`).join(''):'<div class="empty">아직 저장한 곳이 없어요.<br>첫 번째 먹킷리스트를 추가해 보세요! 🍜</div>'}
+
+function showRecipe(id){const place=items.find(x=>String(x.id)===String(id));if(!place||!place.recipe)return;document.getElementById('recipeTitle').textContent=(place.name||'음식')+' · 레시피';document.getElementById('recipeBody').textContent=place.recipe;document.getElementById('recipeModal').classList.add('show')}
+function closeRecipe(){document.getElementById('recipeModal').classList.remove('show')}
+
+function exportExcel(){
+  if(!items.length){alert('엑셀로 추출할 장소가 없어요.');return}
+  const rows=items.map((x,i)=>({
+    '번호':i+1,
+    '음식점 이름':x.name||'',
+    '음식 종류':x.category||'기타',
+    '나라':x.country||'대한민국',
+    '지역':x.region||'',
+    '상태':x.visited?'다녀온 곳':'가고 싶은 곳',
+    '장소 링크':x.url||'',
+    '사진 첨부':x.photo?'첨부됨':'없음',
+    '메모':x.memo||'',
+    '레시피':x.recipe||'',
+    '등록일':x.created_at?new Date(x.created_at).toLocaleDateString('ko-KR'):''
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  items.forEach((item,i)=>{if(item.url){const cell=XLSX.utils.encode_cell({r:i+1,c:6});if(ws[cell])ws[cell].l={Target:item.url,Tooltip:'장소 링크 열기'};}});
+  ws['!cols']=[{wch:7},{wch:24},{wch:16},{wch:16},{wch:18},{wch:22},{wch:42},{wch:16},{wch:42},{wch:50},{wch:14}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'우리 먹킷리스트');
+  const today=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`우리_먹킷리스트_${today}.xlsx`);
+}
+
+let selectedPhoto='';
+document.getElementById('photoFile').addEventListener('change',function(){
+  const file=this.files&&this.files[0]; if(!file)return;
+  if(file.size>4*1024*1024){alert('사진은 4MB 이하로 선택해 주세요.');this.value='';return}
+  if(!file.type.startsWith('image/')){alert('이미지 파일을 선택해 주세요.');this.value='';return}
+  const reader=new FileReader();
+  reader.onload=()=>{selectedPhoto=reader.result;document.getElementById('photoPreview').innerHTML=`<img src="${selectedPhoto}" style="max-width:100%;max-height:180px;border-radius:10px;display:block"><button type="button" class="secondary" style="margin-top:7px" onclick="clearPhoto()">사진 제거</button>`};
+  reader.readAsDataURL(file);
+});
+function clearPhoto(){selectedPhoto='';document.getElementById('photoFile').value='';document.getElementById('photoPreview').innerHTML=''}
+function openForm(){document.getElementById('placeForm').reset();selectedPhoto='';document.getElementById('photoPreview').innerHTML='';document.getElementById('editId').value='';document.getElementById('formTitle').textContent='장소 추가하기';document.getElementById('formModal').classList.add('show')}
+function closeForm(){document.getElementById('formModal').classList.remove('show')}
+function editPlace(id){let x=items.find(i=>String(i.id)===String(id));if(!x)return;openForm();document.getElementById('formTitle').textContent='장소 수정하기';for(let k of ['name','category','country','region','url','memo','recipe'])document.getElementById(k).value=x[k]||'';selectedPhoto=x.photo||'';document.getElementById('photoPreview').innerHTML=selectedPhoto?`<img src="${selectedPhoto}" style="max-width:100%;max-height:180px;border-radius:10px;display:block"><button type="button" class="secondary" style="margin-top:7px" onclick="clearPhoto()">사진 제거</button>`:'';document.getElementById('visited').value=String(!!x.visited);document.getElementById('editId').value=x.id}
+async function savePlace(e){e.preventDefault();let id=document.getElementById('editId').value;let x={name:document.getElementById('name').value.trim(),category:document.getElementById('category').value,country:document.getElementById('country').value,region:document.getElementById('region').value.trim(),url:document.getElementById('url').value.trim(),photo:selectedPhoto,memo:document.getElementById('memo').value.trim(),recipe:document.getElementById('recipe').value.trim(),visited:document.getElementById('visited').value==='true'};
+try{if(client){let r=id?await client.from('food_places').update(x).eq('id',id):await client.from('food_places').insert(x);if(r.error)throw r.error;await loadCloud()}else{if(id){let i=items.findIndex(a=>String(a.id)===String(id));if(i>=0)items[i]={...items[i],...x}}else items.unshift({...x,id:crypto.randomUUID(),created_at:new Date().toISOString()});localStorage.setItem(localKey,JSON.stringify(items));render()}closeForm()}catch(err){alert('저장에 실패했어요: '+err.message)}}
+async function removePlace(id){if(!confirm('이 장소를 삭제할까요?'))return;try{if(client){let r=await client.from('food_places').delete().eq('id',id);if(r.error)throw r.error;await loadCloud()}else{items=items.filter(x=>String(x.id)!==String(id));localStorage.setItem(localKey,JSON.stringify(items));render()}}catch(e){alert('삭제에 실패했어요: '+e.message)}}
+function openSettings(){document.getElementById('settingsModal').classList.add('show')}function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
+async function connectCloud(){let u=document.getElementById('sbUrl').value.trim(),k=document.getElementById('sbKey').value.trim();if(!u||!k){alert('Project URL과 공개 키를 입력해 주세요.');return}try{let c=window.supabase.createClient(u,k);let {data,error}=await c.from('food_places').select('*').limit(1);if(error)throw error;client=c;localStorage.setItem('food_sb_url',u);localStorage.setItem('food_sb_key',k);closeSettings();await loadCloud();alert('공동 목록 연결이 완료됐어요! 이제 같은 사이트 주소를 친구에게 보내면 돼요.')}catch(e){alert('연결에 실패했어요. SQL 실행 여부와 입력값을 확인해 주세요.\\n'+e.message)}}
+init();
+</script>
+</body></html>
